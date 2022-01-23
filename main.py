@@ -214,57 +214,58 @@ if __name__ == '__main__':
                 if op_code == 0:
                     if "author" in event['d'] and "id" in event['d']["author"]:
                         if event['d']["author"]["id"] == "574652751745777665":
-                            if DEBUG:
-                                print(event['d'])
-                            if LOWERCASE_DISCORD_NAME in str(event['d']).lower():
-                                # Image Captcha
-                                if "5 times" in str(event['d']):
-                                    solving_captcha = True
-                                    get_image(event['d']['content'])
-                                    captcha_text["text"] = solve_image_captcha()
-                                    for char in captcha_text:
-                                        captcha_text["checked"].append(False)
-                                    solve_captcha(captcha_text["text"])
+                            if event['d']["channel_id"] == str(CHANNEL_ID):
+                                if DEBUG:
+                                    print(event['d'])
+                                if LOWERCASE_DISCORD_NAME in str(event['d']).lower():
+                                    # Image Captcha
+                                    if "5 times" in str(event['d']):
+                                        solving_captcha = True
+                                        get_image(event['d']['content'])
+                                        captcha_text["text"] = solve_image_captcha()
+                                        for char in captcha_text:
+                                            captcha_text["checked"].append(False)
+                                        solve_captcha(captcha_text["text"])
+                                        sleep(COOLDOWN_TIME)
+                                        time_since_last_captcha = time()
+                                        # Break Out Of Loop
+                                        break
+
+                                    # AddingCaptcha
+                                    elif event['d']["embeds"][0]["title"] == "Anti-bot\n$verify <result>":
+                                        solving_text = True
+                                        desc = event['d']["embeds"][0]["description"]
+                                        desc = desc.rstrip(".")
+                                        desc = desc.replace("*", "")
+
+                                        numbers = []
+                                        for word in desc.split():
+                                            if word.isdigit():
+                                                numbers.append(int(word))
+
+                                        result = 0
+                                        for i in numbers:
+                                            result += i
+                                        solve_captcha(result)
+                                        sleep(COOLDOWN_TIME)
+                                        # Break Out Of Loop
+                                        break
+
+                                    elif "you caught" in str(event['d']).lower():
+                                        break
+
+                                elif "you must wait" in str(event['d']).lower():
+                                    #sleep(COOLDOWN_TIME)
+                                    break
+
+                                elif "you may now continue" in str(event['d']).lower():
+                                    print("Solved Captcha")
+                                    solving_captcha = False
+                                    solving_text = False
+                                    captcha_text["text"] = ""
+                                    captcha_text["checked"] = []
                                     sleep(COOLDOWN_TIME)
-                                    time_since_last_captcha = time()
-                                    # Break Out Of Loop
                                     break
-
-                                # AddingCaptcha
-                                elif event['d']["embeds"][0]["title"] == "Anti-bot\n$verify <result>":
-                                    solving_text = True
-                                    desc = event['d']["embeds"][0]["description"]
-                                    desc = desc.rstrip(".")
-                                    desc = desc.replace("*", "")
-
-                                    numbers = []
-                                    for word in desc.split():
-                                        if word.isdigit():
-                                            numbers.append(int(word))
-
-                                    result = 0
-                                    for i in numbers:
-                                        result += i
-                                    solve_captcha(result)
-                                    sleep(COOLDOWN_TIME)
-                                    # Break Out Of Loop
-                                    break
-
-                                elif "you caught" in str(event['d']).lower():
-                                    break
-
-                            elif "you must wait" in str(event['d']).lower():
-                                #sleep(COOLDOWN_TIME)
-                                break
-
-                            elif "you may now continue" in str(event['d']).lower():
-                                print("Solved Captcha")
-                                solving_captcha = False
-                                solving_text = False
-                                captcha_text["text"] = ""
-                                captcha_text["checked"] = []
-                                sleep(COOLDOWN_TIME)
-                                break
 
                 if op_code == 11:
                     pass
