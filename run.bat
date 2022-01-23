@@ -1,1 +1,1 @@
-cmd ".\env\Scripts\activate & activate & py main.py"
+.\fishingbot\Scripts\activate & py main.py
