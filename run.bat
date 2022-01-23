@@ -1,1 +1,1 @@
-cmd ".\env\Scripts\activate & activate & py main.py"
+cmd ".\env\Scripts\activate & py main.py"
