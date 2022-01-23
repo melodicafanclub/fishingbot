@@ -207,6 +207,7 @@ if __name__ == '__main__':
             num_fishes += 1
             print(f"Fished {num_fishes} times so far. Fishing For {round((((time() - time_started) / 60) / 60), 2)} hours.")
 
+        loops = 0
         while True:
             event = receive_json_response(ws)
             if event:
@@ -295,3 +296,7 @@ if __name__ == '__main__':
                     else:
                         solve_captcha(text)
                         time_since_last_captcha = time()
+
+                loops += 1
+                if loops > 300:
+                    break
