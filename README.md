@@ -27,6 +27,7 @@ Usage:
 		3. Input the ID of the channel you want to fish in (For best results use a channel with just you in it)
 		4. Input your username (DO NOT PUT IN THE NUMBERS/# THAT FOLLOW YOUR USERNAME)
 		5. Input your fishing cooldown
+		6. Input "cf" for coin flipping or "fish" for fishing
 
 	
 	Section 3:

@@ -12,6 +12,7 @@ import os
 import numpy as np
 from scipy.ndimage.filters import gaussian_filter
 import cv2
+from itertools import cycle
 
 
 """USER SETTINGS"""
@@ -24,6 +25,7 @@ CHANNEL_ID = settings["fishing_channel_id"]  # Channel For Fishing
 DISCORD_API_TOKEN = settings["discord_client_token"]  # Account API token
 LOWERCASE_DISCORD_NAME = settings["lowercase_username"]
 COOLDOWN_TIME = settings["fishing_cooldown"]
+TYPE = settings["type"]
 
 """BOT SETTINGS"""
 DEBUG = False
@@ -33,6 +35,10 @@ PREFIX = "$"
 
 # Setup Requests Session
 session = Session()
+
+# Gamble Cycle
+ht = cycle(['h', 't'])
+guess = 'h'
 
 
 def send_json_request(ws, request):
@@ -77,20 +83,40 @@ def send_req(payload):
     request = session.post(FISH_ENDPOINT, headers={'Authorization': DISCORD_API_TOKEN, 'User-Agent': USERAGENT},
                            json=payload)
 
+    if int(str(request.status_code)) == "429":
+        sleep(300)
     # Check if request was valid
-    if int(str(request.status_code)[0]) != 2:
+    elif int(str(request.status_code)[0]) != 2:
         print("\n\nSEND FROM HERE DOWN:\n\nError: " + str(request.status_code))
         print("\n\n", request.content)
         print("\n\n", "Send This To Xander#5341 to fix it...")
 
     # Cooldown and prevent rate limiting and add a little randomness
-    sleep(uniform(COOLDOWN_TIME, COOLDOWN_TIME + 0.2))
+    if TYPE == "fish":
+        sleep(uniform(COOLDOWN_TIME, COOLDOWN_TIME + 0.2))
+    elif TYPE == "cf":
+        sleep(uniform(4, 5))
 
 
 def fish():
     #  Send Fish Message
     fish_json = {"content": f"{PREFIX}fish", "tts": False}
     send_req(fish_json)
+
+
+def cf(amount, change):
+    #  Send Fish Message
+    global guess
+    if change:
+        guess = next(ht)
+
+    cf_json = {"content": f"{PREFIX}cf {guess} {amount}", "tts": False}
+    send_req(cf_json)
+
+
+def get_balance():
+    balance_json = {"content": f"{PREFIX}balance", "tts": False}
+    send_req(balance_json)
 
 
 def solve_captcha(ans):
@@ -197,15 +223,32 @@ if __name__ == '__main__':
     num_captcha = 0
 
 
-
+    # Fishing Vars
     time_started = time()
     num_fishes = 0
+
+    # CF Vars
+    start_balance = 0
+    balance = 0
+    current_cf_amount = 1
+    getting_balance = True
+    loss_in_row = 0
+
     # Event Loop
     while True:
         if not solving_captcha and not solving_text:
-            fish()
-            num_fishes += 1
-            print(f"Fished {num_fishes} times so far. Fishing For {round((((time() - time_started) / 60) / 60), 2)} hours.")
+            if TYPE == "fish":
+                fish()
+                num_fishes += 1
+                print(f"Fished {num_fishes} times so far. Fishing For {round((((time() - time_started) / 60) / 60), 2)} hours.")
+            elif TYPE == "cf":
+                if getting_balance:
+                    get_balance()
+                else:
+                    if loss_in_row > 2:
+                        cf(current_cf_amount, True)
+                    else:
+                        cf(current_cf_amount, False)
 
         loops = 0
         while True:
@@ -233,7 +276,7 @@ if __name__ == '__main__':
                                         break
 
                                     # AddingCaptcha
-                                    elif event['d']["embeds"][0]["title"] == "Anti-bot\n$verify <result>":
+                                    elif "anti-bot" in str(event['d']).lower():
                                         solving_text = True
                                         desc = event['d']["embeds"][0]["description"]
                                         desc = desc.rstrip(".")
@@ -253,6 +296,36 @@ if __name__ == '__main__':
                                         break
 
                                     elif "you caught" in str(event['d']).lower():
+                                        break
+
+                                    elif "coinflip" in str(event['d']).lower():
+                                        loss_in_row += 1
+                                        balance -= current_cf_amount
+                                        current_cf_amount = current_cf_amount * 2
+                                        if "you win" in str(event['d']).lower():
+                                            loss_in_row = 0
+                                            balance += current_cf_amount
+                                            print(f"WON CF OF ${current_cf_amount / 2}\tPROFIT: ${int(balance - start_balance)}")
+                                            current_cf_amount = int(round(pow(1 / 2, 7) * balance, 0))
+                                        break
+
+                                    elif "balance" in str(event['d']).lower():
+                                        getting_balance = False
+                                        desc = event['d']["embeds"][0]["description"]
+                                        desc = desc.rstrip(".")
+                                        desc = desc.replace("*", "")
+                                        desc = desc.replace(",", "")
+                                        desc = desc.replace("$", "")
+                                        desc = desc.replace(":", "")
+
+                                        numbers = []
+                                        for word in desc.split():
+                                            if word.isdigit():
+                                                numbers.append(int(word))
+
+                                        balance = numbers[0]
+                                        start_balance = balance
+                                        current_cf_amount = int(round(pow(1 / 2, 7) * balance, 0))
                                         break
 
                                 elif "you must wait" in str(event['d']).lower():
