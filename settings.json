@@ -1,7 +1,8 @@
 {
-    "fishing_channel_id": "chanel id",
-    "discord_client_token": "discord client token",
-    "lowercase_username": "discord name",
-    "fishing_cooldown": COOLDOWN,
-    "type": "cf" "fish"
+    "fishing_channel_id": "Channel ID",
+    "discord_client_token": "TOKEN",
+    "lowercase_username": "lower case discord name",
+    "fishing_cooldown": 3.5,
+    "type": "fish",
+    "max_losses": 7
 }

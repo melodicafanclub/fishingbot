@@ -26,6 +26,7 @@ DISCORD_API_TOKEN = settings["discord_client_token"]  # Account API token
 LOWERCASE_DISCORD_NAME = settings["lowercase_username"].lower()
 COOLDOWN_TIME = settings["fishing_cooldown"]
 TYPE = settings["type"]
+MAX_LOSSES = settings["max_losses"]
 
 """BOT SETTINGS"""
 DEBUG = False
@@ -95,7 +96,7 @@ def send_req(payload):
     if TYPE == "fish":
         sleep(uniform(COOLDOWN_TIME, COOLDOWN_TIME + 0.2))
     elif TYPE == "cf":
-        sleep(uniform(4, 5))
+        sleep(uniform(2.8, 3.0))
 
 
 def fish():
@@ -245,6 +246,8 @@ if __name__ == '__main__':
                 if getting_balance:
                     get_balance()
                 else:
+                    if (loss_in_row == MAX_LOSSES - 1):
+                        exit()
                     if loss_in_row > 2:
                         cf(current_cf_amount, True)
                     else:
@@ -306,7 +309,7 @@ if __name__ == '__main__':
                                             loss_in_row = 0
                                             balance += current_cf_amount
                                             print(f"WON CF OF ${current_cf_amount / 2}\tPROFIT: ${int(balance - start_balance)}")
-                                            current_cf_amount = int(round(pow(1 / 2, 7) * balance, 0))
+                                            current_cf_amount = int(round(pow(1 / 2, MAX_LOSSES) * balance, 0))
                                         break
 
                                     elif "balance" in str(event['d']).lower():
@@ -325,7 +328,7 @@ if __name__ == '__main__':
 
                                         balance = numbers[0]
                                         start_balance = balance
-                                        current_cf_amount = int(round(pow(1 / 2, 7) * balance, 0))
+                                        current_cf_amount = int(round(pow(1 / 2, MAX_LOSSES) * balance, 0))
                                         break
 
                                 elif "you must wait" in str(event['d']).lower():
