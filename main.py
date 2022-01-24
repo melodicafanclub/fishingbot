@@ -23,7 +23,7 @@ f.close()
 
 CHANNEL_ID = settings["fishing_channel_id"]  # Channel For Fishing
 DISCORD_API_TOKEN = settings["discord_client_token"]  # Account API token
-LOWERCASE_DISCORD_NAME = settings["lowercase_username"]
+LOWERCASE_DISCORD_NAME = settings["lowercase_username"].lower()
 COOLDOWN_TIME = settings["fishing_cooldown"]
 TYPE = settings["type"]
 
