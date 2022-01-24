@@ -96,7 +96,7 @@ def send_req(payload):
     if TYPE == "fish":
         sleep(uniform(COOLDOWN_TIME, COOLDOWN_TIME + 0.2))
     elif TYPE == "cf":
-        sleep(uniform(2.8, 3.0))
+        sleep(uniform(4, 5))
 
 
 def fish():
@@ -246,8 +246,8 @@ if __name__ == '__main__':
                 if getting_balance:
                     get_balance()
                 else:
-                    if (loss_in_row == MAX_LOSSES - 1):
-                        exit()
+                    if loss_in_row == MAX_LOSSES - 1:
+                        current_cf_amount = int(round(pow(1 / 2, MAX_LOSSES) * balance, 0))
                     if loss_in_row > 2:
                         cf(current_cf_amount, True)
                     else:
