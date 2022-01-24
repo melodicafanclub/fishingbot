@@ -27,6 +27,7 @@ LOWERCASE_DISCORD_NAME = settings["lowercase_username"].lower()
 COOLDOWN_TIME = settings["fishing_cooldown"]
 TYPE = settings["type"]
 MAX_LOSSES = settings["max_losses"]
+LOSS_CAP = settings["loss_cap"]
 
 """BOT SETTINGS"""
 DEBUG = False
@@ -247,9 +248,10 @@ if __name__ == '__main__':
                     get_balance()
                 else:
                     if loss_in_row == MAX_LOSSES - 1:
-                        loss_in_row = 0
-                        get_balance()
-                        getting_balance = True
+                        if LOSS_CAP:
+                            loss_in_row = 0
+                            get_balance()
+                            getting_balance = True
                     elif loss_in_row > 2:
                         cf(current_cf_amount, True)
                     else:
@@ -281,7 +283,7 @@ if __name__ == '__main__':
                                         break
 
                                     # AddingCaptcha
-                                    elif "anti-bot" in str(event['d']).lower():
+                                    elif "please enter the answer to the following problem" in str(event['d']).lower():
                                         solving_text = True
                                         desc = event['d']["embeds"][0]["description"]
                                         desc = desc.rstrip(".")
@@ -314,7 +316,7 @@ if __name__ == '__main__':
                                             current_cf_amount = int(round(pow(1 / 2, MAX_LOSSES) * balance, 0))
                                         break
 
-                                    elif "balance" in str(event['d']).lower():
+                                    elif "balance for user " in str(event['d']).lower():
                                         if getting_balance:
                                             getting_balance = False
                                             desc = event['d']["embeds"][0]["description"]
