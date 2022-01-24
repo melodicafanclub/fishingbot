@@ -247,8 +247,10 @@ if __name__ == '__main__':
                     get_balance()
                 else:
                     if loss_in_row == MAX_LOSSES - 1:
-                        current_cf_amount = int(round(pow(1 / 2, MAX_LOSSES) * balance, 0))
-                    if loss_in_row > 2:
+                        loss_in_row = 0
+                        get_balance()
+                        getting_balance = True
+                    elif loss_in_row > 2:
                         cf(current_cf_amount, True)
                     else:
                         cf(current_cf_amount, False)
@@ -308,28 +310,29 @@ if __name__ == '__main__':
                                         if "you win" in str(event['d']).lower():
                                             loss_in_row = 0
                                             balance += current_cf_amount
-                                            print(f"WON CF OF ${current_cf_amount / 2}\tPROFIT: ${int(balance - start_balance)}")
+                                            print(f"WON CF OF ${int(current_cf_amount / 2)} \tPROFIT: ${int(balance - start_balance)}")
                                             current_cf_amount = int(round(pow(1 / 2, MAX_LOSSES) * balance, 0))
                                         break
 
                                     elif "balance" in str(event['d']).lower():
-                                        getting_balance = False
-                                        desc = event['d']["embeds"][0]["description"]
-                                        desc = desc.rstrip(".")
-                                        desc = desc.replace("*", "")
-                                        desc = desc.replace(",", "")
-                                        desc = desc.replace("$", "")
-                                        desc = desc.replace(":", "")
+                                        if getting_balance:
+                                            getting_balance = False
+                                            desc = event['d']["embeds"][0]["description"]
+                                            desc = desc.rstrip(".")
+                                            desc = desc.replace("*", "")
+                                            desc = desc.replace(",", "")
+                                            desc = desc.replace("$", "")
+                                            desc = desc.replace(":", "")
 
-                                        numbers = []
-                                        for word in desc.split():
-                                            if word.isdigit():
-                                                numbers.append(int(word))
+                                            numbers = []
+                                            for word in desc.split():
+                                                if word.isdigit():
+                                                    numbers.append(int(word))
 
-                                        balance = numbers[0]
-                                        start_balance = balance
-                                        current_cf_amount = int(round(pow(1 / 2, MAX_LOSSES) * balance, 0))
-                                        break
+                                            balance = numbers[0]
+                                            start_balance = balance
+                                            current_cf_amount = int(round(pow(1 / 2, MAX_LOSSES) * balance, 0))
+                                            break
 
                                 elif "you must wait" in str(event['d']).lower():
                                     #sleep(COOLDOWN_TIME)
