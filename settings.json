@@ -4,5 +4,6 @@
     "lowercase_username": "lower case discord name",
     "fishing_cooldown": 3.5,
     "type": "fish",
-    "max_losses": 7
+    "max_losses": 7,
+    "loss_cap": false
 }
