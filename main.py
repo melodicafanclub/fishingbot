@@ -21,6 +21,7 @@ f = open('settings.json')
 settings = json.load(f)
 f.close()
 
+
 CHANNEL_ID = settings["fishing_channel_id"]  # Channel For Fishing
 DISCORD_API_TOKEN = settings["discord_client_token"]  # Account API token
 LOWERCASE_DISCORD_NAME = settings["lowercase_username"].lower()
@@ -34,6 +35,7 @@ DEBUG = False
 FISH_ENDPOINT = f"https://discord.com/api/v9/channels/{CHANNEL_ID}/messages"
 USERAGENT = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/79.0.3945.130 Safari/537.36'
 PREFIX = "$"
+POWER = 3
 
 # Setup Requests Session
 session = Session()
@@ -41,6 +43,7 @@ session = Session()
 # Gamble Cycle
 ht = cycle(['h', 't'])
 guess = 'h'
+games = []
 
 
 def send_json_request(ws, request):
@@ -188,7 +191,6 @@ def solve_image_captcha():
     M = cv2.getRotationMatrix2D(center, angle, 1.0)
     rotated = cv2.warpAffine(final, M, (w, h),
                              flags=cv2.INTER_CUBIC, borderMode=cv2.BORDER_REPLICATE)
-
     cv2.imwrite("final.png", rotated)
 
     text = pytesseract.image_to_string(Image.open('final.png'), lang='eng', config='--psm 6').replace(" ", "")
@@ -235,6 +237,7 @@ if __name__ == '__main__':
     current_cf_amount = 1
     getting_balance = True
     loss_in_row = 0
+    coinflips = 0
 
     # Event Loop
     while True:
@@ -252,7 +255,8 @@ if __name__ == '__main__':
                             loss_in_row = 0
                             get_balance()
                             getting_balance = True
-                    elif loss_in_row > 2:
+                    elif loss_in_row > 3:
+                        loss_in_row = 0
                         cf(current_cf_amount, True)
                     else:
                         cf(current_cf_amount, False)
@@ -282,6 +286,18 @@ if __name__ == '__main__':
                                         # Break Out Of Loop
                                         break
 
+                                    elif "**5** times" in str(event['d']).lower():
+                                        solving_captcha = True
+                                        get_image(event['d']["embeds"][0]["image"]["url"])
+                                        captcha_text["text"] = pytesseract.image_to_string(Image.open('img.png'), lang='eng', config='--psm 6').replace(" ", "")
+                                        for char in captcha_text:
+                                            captcha_text["checked"].append(False)
+                                        solve_captcha(captcha_text["text"])
+                                        sleep(COOLDOWN_TIME)
+                                        time_since_last_captcha = time()
+                                        # Break Out Of Loop
+                                        break
+
                                     # AddingCaptcha
                                     elif "please enter the answer to the following problem" in str(event['d']).lower():
                                         solving_text = True
@@ -302,18 +318,40 @@ if __name__ == '__main__':
                                         # Break Out Of Loop
                                         break
 
+                                    # Answer Captcha
+                                    elif "please verify with this code" in str(event['d']).lower():
+                                        desc = event['d']["content"]
+                                        string = desc.split("code: ", 1)[1]
+                                        solve_captcha(string)
+                                        sleep(COOLDOWN_TIME)
+
                                     elif "you caught" in str(event['d']).lower():
                                         break
 
                                     elif "coinflip" in str(event['d']).lower():
-                                        loss_in_row += 1
-                                        balance -= current_cf_amount
-                                        current_cf_amount = current_cf_amount * 2
                                         if "you win" in str(event['d']).lower():
+                                            track_chances = open('ht.txt', 'a')
+                                            track_chances.write(guess)
+                                            track_chances.close()
                                             loss_in_row = 0
                                             balance += current_cf_amount
-                                            print(f"WON CF OF ${int(current_cf_amount / 2)} \tPROFIT: ${int(balance - start_balance)}")
+                                            print(f"WON CF OF ${int(current_cf_amount)} \tPROFIT: ${int(balance - start_balance)}")
                                             current_cf_amount = int(round(pow(1 / 2, MAX_LOSSES) * balance, 0))
+                                        else:
+                                            loss_in_row += 1
+                                            balance -= current_cf_amount
+                                            current_cf_amount = current_cf_amount * POWER
+
+                                            with open("ht.txt", 'a') as track_chances:
+                                                if guess == 'h':
+                                                    track_chances.write('t')
+                                                else:
+                                                    track_chances.write('h')
+
+                                        coinflips += 1
+                                        if coinflips != 0 and coinflips % 10 == 0:
+                                            with open("ht.txt", 'a') as track_chances:
+                                                track_chances.write(',')
                                         break
 
                                     elif "balance for user " in str(event['d']).lower():
@@ -336,8 +374,17 @@ if __name__ == '__main__':
                                             current_cf_amount = int(round(pow(1 / 2, MAX_LOSSES) * balance, 0))
                                             break
 
+                                    elif not solving_captcha and not solving_text and "verify" not in str(event['d']).lower():
+                                        break
+
                                 elif "you must wait" in str(event['d']).lower():
                                     #sleep(COOLDOWN_TIME)
+                                    break
+
+                                elif "solve the captcha posted above" in str(event['d']).lower():
+                                    solving_captcha = True
+                                    get_new_image_captcha()
+                                    time_since_last_captcha = time()
                                     break
 
                                 elif "you may now continue" in str(event['d']).lower():
@@ -348,6 +395,7 @@ if __name__ == '__main__':
                                     captcha_text["checked"] = []
                                     sleep(COOLDOWN_TIME)
                                     break
+
 
                 if op_code == 11:
                     pass
@@ -377,7 +425,3 @@ if __name__ == '__main__':
                     else:
                         solve_captcha(text)
                         time_since_last_captcha = time()
-
-                loops += 1
-                if loops > 300:
-                    break
